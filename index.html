@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+  <title>Movie Trailer App</title>
+  <style>
+     body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      transition: background 0.3s, color 0.3s;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      backdrop-filter: blur(10px);
+      background: rgba(20, 20, 20, 0.85);
+    }
+    .search {
+      flex: 1;
+      margin-right: 10px;
+      /* border: 0.5px solid; */
+    }
+    .search input {
+      width: 50%;
+      padding: 8px;
+      border-radius: 8px;
+      border: solid;
+      outline: none;
+      font-size: 1rem;
+      margin-left: 15rem;
+    }
+    .theme-btn {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #444;
+      color: #fff;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      padding: 20px;
+    }
+    .movie-card {
+      background: #222;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .movie-card:hover {
+      transform: scale(1.05);
+    }
+    .movie-card img {
+      width: 100%;
+      aspect-ratio: 2/3;
+      object-fit: cover;
+      display: block;
+    }
+    .movie-info {
+      padding: 10px;
+    }
+    .no-results {
+      grid-column: 1 / -1;
+      text-align: center;
+      font-size: 1.2rem;
+      color: #ff4c4c;
+      padding: 20px;
+    }
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.9);
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      z-index: 2000;
+    }
+    .modal-content {
+      background: #222;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 400px;
+      width: 100%;
+      text-align: left;
+      color: #fff;
+      /* height: 100vh; */
+    }
+    iframe {
+      width: 100%;
+      /* aspect-ratio: 13/9; */
+      border: none;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+    .close {
+      float: right;
+      font-size: 1.9rem;
+      cursor: pointer;
+      background-color: #ff4c4c;
+      margin-bottom: 2rem;
+    }
+    /* Light theme */
+    body.light {
+      background: #f4f4f4;
+      color: #111;
+    }
+    body.light .movie-card {
+      background: #fff;
+    }
+    body.light header {
+      background: rgba(255, 255, 255, 0.9);
+    }
+    body.light .theme-btn {
+      background: #ddd;
+      color: #111;
+    }
+    .egg{
+      margin-left: 37rem;
+    }
+    @media (max-width: 600px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      .modal-content {
+        max-width: 100%;
+      }
+    }
+    @media (min-width: 601px) and (max-width: 900px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (min-width: 901px) {
+      .grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🎬 Trailers</h1>
+    <div class="search">
+      <input type="text" id="searchInput" placeholder="Search for a movie, genre...">
+    </div>
+    <button class="theme-btn" id="themeToggle">Dark Mode</button>
+  </header>
+
+  <div class="grid" id="movieGrid"></div>
+
+  <!-- Modal -->
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <span class="close" id="closeModal">&times;</span>
+      <iframe id="trailer" allowfullscreen></iframe>
+      <h2 id="movieTitle"></h2>
+      <p><strong>Year:</strong> <span id="movieYear"></span></p>
+      <p><strong>Genre:</strong> <span id="movieGenre"></span></p>
+      <p id="movieSynopsis"></p>
+      <p><strong>Cast:</strong></p>
+      <ul id="movieCast"></ul>
+    </div>
+  </div>
+
+  <footer class="egg">
+    <p>© Powered By Innovation.</p>
+  </footer>
+
+
+
+  <script>
+    const movies = [
+      {
+        title: "Inception",
+        year: "2010",
+        genre: "Action, Science Fiction, Adventure",
+        poster: "inception.webp",
+        yt: "cdx31ak4KbQ",
+        duration: "2hrs",
+        synopsis: "Cobb, a skilled thief who commits corporate espionage by infiltrating the subconscious of his targets is offered a chance to regain his old life as payment for a task considered to be impossible: 'inception', the implantation of another person's idea into a target's subconscious.",
+        cast: ["Leonardo DiCaprio", "Joseph Gordon-Levitt", "Elliot Page"]
+      },
+      {
+        title: "Ballerina",
+        year: "2025",
+        genre: "Action, Crime, Thriller",
+        poster: "ballerina.webp",
+        yt: "b9Rr9ygb-ac",
+        duration: "1h 25m",
+        synopsis: "Taking place during the events of John Wick: Chapter 3 – Parabellum, Eve Macarro begins her training in the assassin traditions of the Ruska Roma.",
+        cast: ["Keanu Reeves", "Ian McShane", "Ana de Armas"]
+      },
+      {
+        title: "Breaking Bad",
+        year: "2008",
+        genre: "Drama, Crime",
+        poster: "breaking bad.webp",
+        yt: "XZ8daibM3AE",
+        duration: "1h 25m",
+        synopsis: "Walter White, a New Mexico chemistry teacher, is diagnosed with Stage III cancer and given a prognosis of only two years left to live. He becomes filled with a sense of fearlessness and an unrelenting desire to secure his family's financial future at any cost as he enters the dangerous world of drugs and crime.",
+        cast: ["Bryan Cranston", "Aaron Paul","Anna Gunn"]
+      },
+      {
+        title: "The Dark Knight",
+        year: "2008",
+        genre: "Action/Crime",
+        poster: "dark.webp",
+        yt: "EXeTwQWrcwY",
+        duration: "1h 25m",
+        synopsis: "Batman faces the Joker, a criminal mastermind spreading chaos in Gotham.",
+        cast: ["Christian Bale", "Heath Ledger", "Aaron Eckhart"]
+      },
+      {
+        title: "Interstellar",
+        year: "2014",
+        genre: "Sci-Fi/Adventure",
+        poster: "inter.webp",
+        yt: "zSWdZVtXT7E",
+        duration: "1h 25m",
+        synopsis: "Explorers undertake a mission through a wormhole to save humanity.",
+        cast: ["Matthew McConaughey", "Anne Hathaway", "Jessica Chastain"]
+      },
+      {
+        title: "Avengers: Endgame",
+        year: "2019",
+        genre: "Action/Sci-Fi",
+        poster: "https://m.media-amazon.com/images/I/81ExhpBEbHL._AC_SY679_.jpg",
+        yt: "TcMBFSGVi1c",
+        duration: "1h 25m",
+        synopsis: "The Avengers assemble to undo the damage caused by Thanos.",
+        cast: ["Robert Downey Jr.", "Chris Evans", "Scarlett Johansson"]
+      },
+      {
+        title: "Black Panther",
+        year: "2018",
+        genre: "Action/Adventure",
+        poster: "download (3).jpeg",
+        yt: "xjDjIWPwcPU",
+        duration: "1h 25m",
+        synopsis: "T'Challa returns to Wakanda to take his place as king and face challengers.",
+        cast: ["Chadwick Boseman", "Michael B. Jordan", "Lupita Nyong'o"]
+      },
+      {
+        title: "Dexter",
+        year: "2006",
+        genre: "Crime, Drama, Mystery",
+        poster: "Dex.webp",
+        yt: "YQeUmSD1c3g",
+        duration: "1h 25m",
+        synopsis: "Dexter Morgan, a blood spatter pattern analyst for the Miami Metro Police also leads a secret life as a serial killer, hunting down criminals who have slipped through the cracks of justice.",
+        cast: ["Micheal C Hall", "Jennifer Carpenter", "David Zayas"]
+      },
+      {
+        title: "Despicable Me 4",
+        year: "2024",
+        genre: "Family, Comedy, Animation, Science Fiction",
+        poster: "DM4.webp",
+        yt: "LtNYaH61dXY",
+        duration: "1h 25m",
+        synopsis: "Gru and Lucy and their girls—Margo, Edith and Agnes—welcome a new member to the Gru family, Gru Jr., who is intent on tormenting his dad. Gru also faces a new nemesis in Maxime Le Mal and his femme fatale girlfriend Valentina, forcing the family to go on the run.",
+        cast: ["Steve Carell", "Kristen Wiig", "Will Ferrell"]
+      },
+      {
+        title: "Spirited Away",
+        year: "2018",
+        genre: "Action/Adventure",
+        poster: "download (1).jpeg",
+        yt: "GAp2_0JJskk",
+        duration: "1h 25m",
+        synopsis: "A young girl, Chihiro, becomes trapped in a strange new world of spirits. When her parents undergo a mysterious transformation, she must call upon the courage she never knew she had to free her family.",
+        cast: ["Rumi Hiiragi", "Miyu Irino", "Mari Natsuki"]
+      },
+      {
+        title: "Relay",
+        year: "2025",
+        genre: "Action/Adventure",
+        poster: "relay.webp",
+        yt: "cAggzjekqbA",
+        duration: "1h 25m",
+        synopsis: "Tom, a world class (fixer), specializes in brokering lucrative payoffs between corrupt corporations and the individuals who threaten their ruin. He keeps his identity a secret through meticulous planning and always follows an exacting set of rules. But when a message arrives one day from potential client Sarah, needing Tom's protection just to stay alive, the rules quickly start to change.",
+        cast: ["Riz Ahmed", "Lily James", "Sam Worthington"]
+      },
+      {
+        title: "Demon Slayer: Kimetsu no Yaiba Infinity Castle",
+        year: "2025",
+        genre: "Action, Animation, Fantasy, Thriller",
+        poster: "demon.webp",
+        yt: "",
+        duration: "1h 25m",
+        synopsis: "The Demon Slayer Corps are drawn into the Infinity Castle, where Tanjiro, Nezuko, and the Hashira face terrifying Upper Rank demons in a desperate fight as the final battle against Muzan Kibutsuji begins.",
+        cast: ["Natsuki Hanae", "Hiro Shimono", "Takahiro Sakurai"]
+      },
+      {
+        title: "Game of Thrones",
+        year: "2011",
+        genre: "Sci-Fi & Fantasy, Drama Action & Adventure",
+        poster: "GOT.webp",
+        yt: "KPLWWIOCOOQ",
+        duration: "1h 25m",
+        synopsis: "Seven noble families fight for control of the mythical land of Westeros. Friction between the houses leads to full-scale war. All while a very ancient evil awakens in the farthest north. Amidst the war, a neglected military order of misfits, the Night's Watch, is all that stands between the realms of men and icy horrors beyond.",
+        cast: ["Peter Dinklage", "Kit Harington", "Emilia Clarke"]
+      },
+      {
+        title: "Squid Game",
+        year: "2021",
+        genre: "Action & Adventure, Mystery, Drama",
+        poster: "Squid.webp",
+        yt: "oqxAJKy0ii4",
+        duration: "1h 25m",
+        synopsis: "Hundreds of cash-strapped players accept a strange invitation to compete in children's games. Inside, a tempting prize awaits — with deadly high stakes.",
+        cast: ["Lee Jung-jae", "Wi Ha-jun", "Lee Byung-hun"]
+      },
+      {
+        title: "The Blacklist",
+        year: "2013",
+        genre: "Drama, Crime, Mystery",
+        poster: "the blacklist.webp",
+        yt: "JGBIimq1I3A",
+        duration: "1h 25m",
+        synopsis: "Raymond 'Red' Reddington, one of the FBI's most wanted fugitives, surrenders in person at FBI Headquarters in Washington, D.C. He claims that he and the FBI have the same interests: bringing down dangerous criminals and terrorists. In the last two decades, he's made a list of criminals and terrorists that matter the most but the FBI cannot find because it does not know they exist. Reddington calls this 'The Blacklist'. Reddington will co-operate, but insists that he will speak only to Elizabeth Keen, a rookie FBI profiler.",
+        cast: ["James Spader", "Diego Klattenhoff", "Harrt Lennix"]
+      },
+      {
+        title: "F1",
+        year: "2025",
+        genre: "Action, Drama",
+        poster: "Formula1.webp",
+        yt: "ge_ABjtYx88",
+        duration: "1h 25m",
+        synopsis: "Racing legend Sonny Hayes is coaxed out of retirement to lead a struggling Formula 1 team—and mentor a young hotshot driver—while chasing one more chance at glory.",
+        cast: ["Brad Pitt", "Damson Idris", "Javier Bardem"]
+      },
+      {
+        title: "Mission Impossible: THE FINAL RECKONING",
+        year: "2025",
+        genre: "Action, Thriller, Thriller",
+        poster: "mission.webp",
+        yt: "G1VBfMCZVkw",
+        duration: "1h 25m",
+        synopsis: "Ethan Hunt and team continue their search for the terrifying AI known as the Entity — which has infiltrated intelligence networks all over the globe — with the world's governments and a mysterious ghost from Hunt's past on their trail. Joined by new allies and armed with the means to shut the Entity down for good, Hunt is in a race against time to prevent the world as we know it from changing forever.",
+        cast: ["Tom Cruise", "Hayley Atwell", "Ving Rhames"]
+      },
+      {
+        title: "Thunderbolts*",
+        year: "2025",
+        genre: "Action, Science Fiction, Adventure",
+        poster: "Thunderbolt.webp",
+        yt: "7rs_HhSA7XY",
+        duration: "1h 25m",
+        synopsis: "After finding themselves ensnared in a death trap, seven disillusioned castoffs must embark on a dangerous mission that will force them to confront the darkest corners of their pasts.",
+        cast: ["Florence Pugh", "Sebastain Stan", "Lewis Pullman"]
+      },
+      {
+        title: "Peace Maker",
+        year: "2022",
+        genre: "Action & Adventure, Drama",
+        poster: "peace.webp",
+        yt: "O9DAiLI7Cn8",
+        duration: "1h 25m",
+        synopsis: "The continuing story of Peacemaker, a vainglorious superhero/supervillain who believes in peace at any cost — no matter how many people he has to kill. After a miraculous recovery from his duel with Bloodsport, Peacemaker soon discovers that his freedom comes at a price.",
+        cast: ["John Cena", "Daniella Brooks", "Freddie Stroma"]
+      },
+      {
+        title: "Shameless",
+        year: "2011",
+        genre: "Comedy, Drama",
+        poster: "shameless.webp",
+        yt: "9tvkYS5cA58",
+        duration: "1h 25m",
+        synopsis: "Chicagoan Frank Gallagher is the proud single dad of six smart, industrious, independent kids, who without him would be... perhaps better off. When Frank's not at the bar spending what little money they have, he's passed out on the floor. But the kids have found ways to grow up in spite of him. They may not be like any family you know, but they make no apologies for being exactly who they are.",
+        cast: ["William H. Macy", "Jeremy Allen White", "Ethan Cutkosky"]
+      },
+      {
+        title: "Dan Da Dan",
+        year: "2024",
+        genre: "Action & Adventure, Animation, Comedy, Sci-Fi & Fantasy",
+        poster: "dan.webp",
+        yt: "pHLEyqsxZV8",
+        duration: "1h 25m",
+        synopsis: "In a bet to prove whether ghosts or aliens exist, two high schoolers face terrifying paranormal threats, gain superpowers and maybe even fall in love?!",
+        cast: ["Shion Wakayama", "Natsuki Hanae", "Nana Mizuki"]
+      },
+      {
+        title: "My Fault",
+        year: "2023",
+        genre: "Romance, Drama",
+        poster: "my.webp",
+        yt: "xY-qRGC6Yu0",
+        duration: "1h 25m",
+        synopsis: "Noah must leave her city, boyfriend, and friends to move into William Leister's mansion, the flashy and wealthy husband of her mother Rafaela. As a proud and independent 17 year old, Noah resists living in a mansion surrounded by luxury. However, it is there where she meets Nick, her new stepbrother, and the clash of their strong personalities becomes evident from the very beginning.",
+        cast: ["Nicole Wallace", "Gabriel Guevara", "Marta Hazas"]
+      },
+      {
+        title: "The Dead Girls",
+        year: "2025",
+        genre: "Crime, Drama",
+        poster: "the.webp",
+        yt: "oX5EXM40OPY",
+        duration: "1h 25m",
+        synopsis: "The story of the Baladro sisters, known as “Las Poquianchis”, who built a brothel empire and became merciless killers in 1960s Mexico.",
+        cast: ["Arcelia Ramirez", "Paulina Gaitan", "Joaquin Cosio"]
+      },
+      {
+        title: "The Naked Gun",
+        year: "2025",
+        genre: "Crime, Action, Comedy",
+        poster: "v.webp",
+        yt: "uLguU7WLreA",
+        duration: "1h 25m",
+        synopsis: "Only one man has the particular set of skills... to lead Police Squad and save the world: Lt. Frank Drebin Jr.",
+        cast: ["Liam Neeson", "Pamela Anderson", "Paul Walter Hauser"]
+      },
+      {
+        title: "Peaky Blinders",
+        year: "2013",
+        genre: "Crime, Drama",
+        poster: "peaky.webp",
+        yt: "EM12mcTEI88",
+        synopsis: "A gangster family epic set in 1919 Birmingham, England and centered on a gang who sew razor blades in the peaks of their caps, and their fierce boss Tommy Shelby, who means to move up in the world.",
+        cast: ["Cillian Murphy", "Paul Anderson", "Sophie Rundle"]
+      },
+      {
+        title: "Novocaine",
+        year: "2025",
+        genre: "Thriller, Comedy, Action",
+        poster: "nov.webp",
+        yt: "99BLnkAlC1M",
+        duration: "1h 50m",
+        synopsis: "When the girl of his dreams is kidnapped, everyman Nate turns his inability to feel pain into an unexpected strength in his fight to get her back.",
+        cast: ["Jack Quaid", "Amber Midthunder", "Ray Nicholson"]
+      },
+      {
+        title: "The Conjuring 2",
+        year: "2016",
+        genre: "Horror",
+        poster: "con2.webp",
+        yt: "VFsmuRPClr4",
+        duration: "1h 50m",
+        synopsis: "Lorraine and Ed Warren travel to north London to help a single mother raising four children alone in a house plagued by malicious spirits.",
+        cast: ["Vera Farmiga", "Patrick Wilson", "Madison Wolfe"]
+      },
+      {
+        title: "Kissing Booth",
+        year: "2018",
+        genre: "Romance, Comedy",
+        poster: "k1.webp",
+        yt: "7bfS6seiLhk",
+        duration: "1h 45m",
+        synopsis: "When teenager Elle's first kiss leads to a forbidden romance with the hottest boy in high school, she risks her relationship with her best friend.",
+        cast: ["Joey King", "Joel Courtney", "Jacob Elordi"]
+      },
+      {
+        title: "The Naked Gun",
+        year: "2025",
+        genre: "Crime, Action, Comedy",
+        poster: "v.webp",
+        yt: "uLguU7WLreA",
+        duration: "1h 25m",
+        synopsis: "Only one man has the particular set of skills... to lead Police Squad and save the world: Lt. Frank Drebin Jr.",
+        cast: ["Liam Neeson", "Pamela Anderson", "Paul Walter Hauser"]
+      },
+      {
+        title: "Alien: Earth",
+        year: "2025",
+        genre: "Sci-Fi & Fantasy, Drama",
+        poster: "al.webp",
+        yt: "FqIi3N9dusk",
+        // duration: "1h 25m",
+        synopsis: "When the mysterious deep space research vessel USCSS Maginot crash-lands on Earth, Wendy and a ragtag group of tactical soldiers make a fateful discovery that puts them face-to-face with the planet's greatest threat.",
+        cast: ["Sydney Chandler", "Alex Lawther", "Essie Davis"]
+      },
+      {
+        title: "Black Rabbit",
+        year: "2025",
+        genre: "Crime, Drama",
+        poster: "bl.webp",
+        yt: "9j_IFlmFRvU",
+        // duration: "1h 25m",
+        synopsis: "A rising-star restaurateur is forced into New York's criminal underworld when his chaotic brother returns to town with loan sharks on his trail.",
+        cast: ["Jason Bateman", "Jude Law", "Chris Coy"]
+      },
+      {
+        title: "Bullet Train",
+        year: "2022",
+        genre: "Thriller, Action, Comedy",
+        poster: "bt.webp",
+        yt: "EGeJczJvWns",
+        duration: "2h 6m",
+        synopsis: "Unlucky assassin Ladybug is determined to do his job peacefully after one too many gigs gone off the rails. Fate, however, may have other plans, as Ladybug's latest mission puts him on a collision course with lethal adversaries from around the globe—all with connected, yet conflicting, objectives—on the world's fastest train",
+        cast: ["Brad Pitt", "Joey King", "Andrew Koji"]
+      },
+      {
+        title: "The Simpsons",
+        year: "1989",
+        genre: "Family, Animation, Comedy",
+        poster: "ts.webp",
+        yt: "_jgYEYERYFQ",
+        duration: "32 Seasons",
+        synopsis: "Set in Springfield, the average American town, the show focuses on the antics and everyday adventures of the Simpson family; Homer, Marge, Bart, Lisa and Maggie, as well as a virtual cast of thousands. Since the beginning, the series has been a pop culture icon, attracting hundreds of celebrities to guest star. The show has also made name for itself in its fearless satirical take on politics, media and American life in general.",
+        cast: ["Dan Castellaneta", "Julie Kavner", "Nancy Cartwright"]
+      },
+      {
+        title: "Rick and Morty",
+        year: "2013",
+        genre: "Animation, Action & Adventure, Comedy, Sci-Fi & Fantasy",
+        poster: "r.jpg",
+        yt: "WNhH00OIPP0",
+        // duration: "1h 25m",
+        synopsis: "Rick is a mentally-unbalanced but scientifically gifted old man who has recently reconnected with his family. He spends most of his time involving his young grandson Morty in dangerous, outlandish adventures throughout space and alternate universes. Compounded with Morty's already unstable family life, these events cause Morty much distress at home and school.",
+        cast: ["Justin Roiland", "Spencer Grammer", "Sarah Chalke"]
+      },
+      {
+        title: "The Gorge",
+        year: "2025",
+        genre: "Romance, Science Fiction, Thriller",
+        poster: "tg.webp",
+        yt: "rUSdnuOLebE",
+        duration: "2h 7m",
+        synopsis: "Two highly trained operatives grow close from a distance after being sent to guard opposite sides of a mysterious gorge. When an evil below emerges, they must work together to survive what lies within.",
+        cast: ["Miles Teller", "Anya Taylor-Joy", "Sope Dirisu"]
+      },
+      {
+        title: "Entergalactic",
+        year: "2022",
+        genre: "Music, Romance, Animation",
+        poster: "en.webp",
+        yt: "2C2lyCIusKo",
+        duration: "1h 33m",
+        synopsis: "Ambitious artist Jabari attempts to balance success and love when he moves into his dream Manhattan apartment and falls for his next-door neighbor.",
+        cast: ["Kid Cudi", "Jessica Williams", "Laura Harrier"]
+      },
+      {
+        title: "The Naked Gun",
+        year: "2025",
+        genre: "Crime, Action, Comedy",
+        poster: "v.webp",
+        yt: "uLguU7WLreA",
+        duration: "1h 25m",
+        synopsis: "Only one man has the particular set of skills... to lead Police Squad and save the world: Lt. Frank Drebin Jr.",
+        cast: ["Liam Neeson", "Pamela Anderson", "Paul Walter Hauser"]
+      },
+      {
+        title: "The Kissing Booth 2",
+        year: "2020",
+        genre: "Romance, Comedy",
+        poster: "k2.webp",
+        yt: "fjVonI2oVeM",
+        duration: "2h 12m",
+        synopsis: "With college decisions looming, Elle juggles her long-distance romance with Noah, changing relationship with bestie Lee and feelings for a new classmate.",
+        cast: ["Joey King", "Jacob Elordi", "Taylor Zakhar Perez"]
+      },
+      {
+        title: "The Conjuring",
+        year: "2013",
+        genre: "Horror, Thriller",
+        poster: "con1.webp",
+        yt: "k10ETZ41q5o",
+        duration: "1h 52m",
+        synopsis: "Paranormal investigators Ed and Lorraine Warren work to help a family terrorized by a dark presence in their farmhouse. Forced to confront a powerful entity, the Warrens find themselves caught in the most terrifying case of their lives.",
+        cast: ["Vera Farmiga", "Patrick Wilson", "Ron Livingston"]
+      },
+      {
+        title: "Ready Player One",
+        year: "2018",
+        genre: "Adventure, Action, Science Fiction",
+        poster: "r1.webp",
+        yt: "1hrwbc5qCZ4",
+        duration: "2h 20m",
+        synopsis: "When the creator of a popular video game system dies, a virtual contest is created to compete for his fortune.",
+        cast: ["Tye Sheridan", "Olivia Cooke", "Ben Mendelsohn"]
+      },
+      {
+        title: "Turbo",
+        year: "2013",
+        genre: "Animation, Family",
+        poster: "turbo.webp",
+        yt: "VlRtm8Gh9PQ",
+        duration: "1h 36m",
+        synopsis: "The tale of an ordinary garden snail who dreams of winning the Indy 500.",
+        cast: ["Ryan Reynolds", "Paul Giamatti", "Samuel L. Jackson"]
+      },
+      {
+        title: "The Kissing Booth 3",
+        year: "2021",
+        genre: "Romance, Comedy",
+        poster: "k3.webp",
+        yt: "5fKn0Dhj64w",
+        duration: "1h 52m",
+        synopsis: "It’s the summer before Elle heads to college, and she has a secret decision to make. Elle has been accepted into Harvard, where boyfriend Noah is matriculating, and also Berkeley, where her BFF Lee is headed and has to decide if she should stay or not.",
+        cast: ["Joey King", "Jacob Elordi", "Taylor Zakhar Perez"]
+      },
+    ];
+
+    const grid = document.getElementById("movieGrid");
+    const searchInput = document.getElementById("searchInput");
+    const themeToggle = document.getElementById("themeToggle");
+    const modal = document.getElementById("modal");
+    const trailer = document.getElementById("trailer");
+    const movieTitle = document.getElementById("movieTitle");
+    const movieYear = document.getElementById("movieYear");
+    const movieGenre = document.getElementById("movieGenre");
+    const movieSynopsis = document.getElementById("movieSynopsis");
+    const movieCast = document.getElementById("movieCast");
+    const movieDuration = document.getElementById("movieDuration");
+    const closeModal = document.getElementById("closeModal");
+
+    function renderMovies(list) {
+      grid.innerHTML = "";
+      if (list.length === 0) {
+        grid.innerHTML = `<p class="no-results">❌ Movie not available at the moment</p>`;
+        return;
+      }
+      list.forEach((m) => {
+        const card = document.createElement("div");
+        card.className = "movie-card";
+        card.innerHTML = `
+          <img src="${m.poster}" alt="${m.title}" loading="lazy"/>
+          <div class="movie-info">
+            <h2>${m.title}</h2>
+            <p>${m.year} • ${m.genre}</p>
+            <p>${m.duration}
+          </div>
+        `;
+        card.onclick = () => openModal(m);
+        grid.appendChild(card);
+      });
+    }
+
+    function openModal(movie) {
+      trailer.src = `https://www.youtube.com/embed/${movie.yt}`;
+      movieTitle.textContent = movie.title;
+      movieYear.textContent = movie.year;
+      movieGenre.textContent = movie.genre;
+      movieSynopsis.textContent = movie.synopsis;
+      movieCast.innerHTML = movie.cast.map(actor => `<li>${actor}</li>`).join("");
+      modal.style.display = "flex";
+    }
+
+    closeModal.onclick = () => {
+      modal.style.display = "none";
+      trailer.src = ""; // stop trailer when closing
+    };
+
+    window.onclick = (e) => {
+      if (e.target === modal) {
+        modal.style.display = "none";
+        trailer.src = "";
+      }
+    };
+
+    searchInput.addEventListener("input", () => {
+      const query = searchInput.value.toLowerCase();
+      const filtered = movies.filter((m) =>
+        m.title.toLowerCase().includes(query) ||
+        m.genre.toLowerCase().includes(query)
+      );
+      renderMovies(filtered);
+    });
+
+    themeToggle.addEventListener("click", () => {
+      document.body.classList.toggle("light");
+      themeToggle.textContent = document.body.classList.contains("light") ? "Light Mode" : "Dark Mode";
+    });
+
+    // Initial render
+    renderMovies(movies);
+  </script>
+</body>
+</html>
