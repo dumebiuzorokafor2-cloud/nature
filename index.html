@@ -30,13 +30,14 @@
       /* border: 0.5px solid; */
     }
     .search input {
-      width: 50%;
+      width: 100%;
+      max-width:400px;
       padding: 8px;
       border-radius: 8px;
-      border: solid;
+      border: 1px solid #666;
       outline: none;
       font-size: 1rem;
-      margin-left: 5rem;
+      margin-left: 0.5rem;
     }
     .theme-btn {
       padding: 8px 12px;
@@ -45,7 +46,7 @@
       cursor: pointer;
       background: #444;
       color: #fff;
-      margin-right:10rem
+      margin-left:0.5rem
     }
     .grid {
   display: grid;
@@ -129,40 +130,29 @@
       background: #ddd;
       color: #111;
     }
-    .egg{
-      margin-left: 37rem;
+    footer.egg{
+      margin: 20px 0;
+      text-align: center;
+      padding: 10px;
+      color: var(--text);
     }
-/*     @media (max-width: 600px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-      .modal-content {
-        max-width: 100%;
-      }
-    }
-    @media (min-width: 601px) and (max-width: 900px) {
-      .grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-    @media (min-width: 901px) {
-      .grid {
-        grid-template-columns: repeat(4, 1fr);
-      }
-    } */
-/*     @media(max-width:600px){
-      .modal iframe { height: 250px; }
-    } */
     /* Phones */
 @media (max-width: 600px) {
-  .grid {
-    grid-template-columns: 1fr;
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .search {
+    width: 80%;
   }
   .search input {
     width: 100%;
+    max-width: none;
   }
   .modal-content {
     max-width: 100%;
+    height: auto;
   }
 }
 
@@ -171,18 +161,12 @@
   .grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .search input {
-    width: 80%;
-  }
 }
 
-/* Small laptops */
+/* Laptops */
 @media (min-width: 901px) and (max-width: 1200px) {
   .grid {
     grid-template-columns: repeat(3, 1fr);
-  }
-  .search input {
-    width: 60%;
   }
 }
 
@@ -190,9 +174,6 @@
 @media (min-width: 1201px) {
   .grid {
     grid-template-columns: repeat(4, 1fr);
-  }
-  .search input {
-    width: 50%;
   }
 }
   </style>
@@ -727,6 +708,7 @@
   </script>
 </body>
 </html>
+
 
 
 
